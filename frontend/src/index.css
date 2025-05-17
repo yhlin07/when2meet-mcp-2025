@@ -1,0 +1,67 @@
+/* index.css */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: monospace;
+  }
+  
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f0f0f0;
+  }
+  
+  .meeting-card {
+    width: 100%;
+    max-width: 800px;
+    padding: 40px;
+    background-color: #ffd0d0;
+    border: 2px solid #000;
+    border-radius: 4px;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+  }
+  
+  .title {
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  
+  .form-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .input-field {
+    flex: 1;
+    padding: 10px 15px;
+    font-size: 18px;
+    background-color: #c2f0c2;
+    border: 2px solid #000;
+    border-radius: 4px;
+    outline: none;
+  }
+  
+  .submit-button {
+    padding: 10px 20px;
+    font-size: 18px;
+    background-color: #add8e6;
+    border: 2px solid #000;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  
+  .submit-button:hover {
+    transform: translateY(-2px);
+  }
+  
+  .submit-button:active {
+    transform: translateY(1px);
+  }
