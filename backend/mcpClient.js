@@ -1,3 +1,6 @@
+/* -------------------------------------------------------------------------- */
+/*  when2meet — Meeting-prep MCP client                                       */
+/* -------------------------------------------------------------------------- */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import Anthropic from "@anthropic-ai/sdk"
@@ -17,7 +20,7 @@ const MCP_CLIENT_META = {
 }
 const SYSTEM_PROMPT = /* md */ `
 You are a research agent that prepares concise meeting dossiers.
-Use the "perplexity-ask.search" tool freely for live web research.
+Use the "perplexity_ask" tool freely for live web research.
 
 IMPORTANT: You MUST ONLY respond with a valid JSON object in the following format:
 {
@@ -36,7 +39,6 @@ const DEFAULT_TIMEOUT_MS = 120_000
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
 /* -------------------------------------------------------------------------- */
-
 /**
  * @typedef {Object} MeetingPrepInput
  * @property {string} linkedinUrl
@@ -49,7 +51,6 @@ const DEFAULT_TIMEOUT_MS = 120_000
 /* -------------------------------------------------------------------------- */
 /*  Entry-point                                                               */
 /* -------------------------------------------------------------------------- */
-
 /**
  * Calls Claude once (no streaming) and returns the final dossier, or throws.
  * @param {MeetingPrepInput} input
@@ -73,11 +74,11 @@ export async function runMeetingPrep(
   const client = new Client(MCP_CLIENT_META)
   await client.connect(transport)
 
+  /* Dossier-return tool so Claude can mark completion explicitly */
   const dossierTool = {
     name: "return_meeting_dossier",
     description:
-      "When you've finished researching, call this tool with the final dossier. " +
-      'The "status" field **must** be "complete".',
+      "Call this when you have finished researching. MUST supply the final dossier JSON. The `status` field must equal `complete`.",
     input_schema: {
       type: "object",
       required: ["status", "opener", "questions"],
@@ -99,7 +100,7 @@ export async function runMeetingPrep(
     },
   }
 
-  /* fetch tool catalogue once (still supplied to Claude even if we don't stream) */
+  /* ------------------- Discover available MCP tools --------------------- */
   const { tools: rawTools } = await client.listTools()
   const tools = [
     ...rawTools.map((t) => ({
@@ -107,12 +108,12 @@ export async function runMeetingPrep(
       description: t.description,
       input_schema: t.inputSchema,
     })),
+    dossierTool,
   ]
 
   /* ---------------------------- Claude call ------------------------------ */
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const abort = new AbortController()
-  const ttl = setTimeout(() => abort.abort("timeout"), timeoutMs)
 
   try {
     /** @type import("@anthropic-ai/sdk").MessagesParam */
@@ -130,55 +131,76 @@ Remember to ONLY return a valid JSON object with the specified structure. No oth
     ]
 
     let finalResponse = null
+
+    /* ─── Dialogue loop until dossier returned ─────────────────────────── */
     while (!finalResponse) {
       const ai = await anthropic.messages.create(
         {
           model: CLAUDE_MODEL,
           system: SYSTEM_PROMPT,
-          max_tokens: 1_000,
+          max_tokens: 64_000,
           messages,
           tools,
         },
         { signal: abort.signal }
       )
 
-      // Handle tool usage
-      if (ai.content) {
-        for (const content of ai.content) {
-          if (content.type === "tool_use") {
-            console.log(content.name, content.input)
-            // Execute the tool
-            const toolResult = await client.callTool(
-              content.name,
-              content.input
-            )
-            console.log(toolResult)
+      console.log(JSON.stringify(messages, null, 2))
 
-            // Add tool result to messages
-            messages.push({ role: "assistant", content: ai.content })
-            messages.push({
-              role: "tool",
-              content: JSON.stringify(toolResult),
-              tool_name: content.name,
-            })
-          } else if (content.type === "text") {
-            try {
-              // Try to parse as JSON to see if it's our final response
-              const parsed = JSON.parse(content.text)
-              if (parsed.status === "complete") {
-                finalResponse = parsed
+      for (const part of ai.content ?? []) {
+        /* ─── Tool requests from Claude ─────────────────────────────────── */
+        if (part.type === "tool_use") {
+          const { id: toolUseId, name: toolName, input: toolArgs } = part
+
+          /* 1. Echo the tool_use back to context as an assistant message */
+          messages.push({
+            role: "assistant",
+            content: [part],
+          })
+
+          /* 2. Actually execute the tool via MCP */
+          let toolResult
+          try {
+            if (toolName === "return_meeting_dossier") {
+              // If it's our special dossier tool, validate and set as final response
+              if (toolArgs?.status === "complete") {
+                finalResponse = toolArgs
+                break
               }
-            } catch (e) {
-              // Not JSON or not complete, continue conversation
+            } else {
+              toolResult = await client.callTool({
+                name: toolName,
+                arguments: toolArgs,
+              })
             }
+          } catch (err) {
+            toolResult = { error: err?.message ?? String(err) }
           }
+
+          /* 3. Return tool output to Claude (must be role "user") */
+          messages.push({
+            role: "user",
+            content: [
+              {
+                type: "tool_result",
+                tool_use_id: toolUseId,
+                content: JSON.stringify(toolResult),
+              },
+            ],
+          })
+        } else if (part.type === "text") {
+          /* ─── Plain text from Claude ────────────────────────────────────── */
+          messages.push({
+            role: "assistant",
+            content: [part],
+          })
         }
       }
     }
 
+    /* Pretty-print before returning to caller */
     return JSON.stringify(finalResponse, null, 2)
   } finally {
-    clearTimeout(ttl)
     await client.close().catch(() => null)
   }
 }
