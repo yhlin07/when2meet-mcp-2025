@@ -34,8 +34,6 @@ IMPORTANT: You MUST ONLY respond with a valid JSON object in the following forma
 Do not include any other text, explanations, or natural language outside of this JSON structure.
 All content should be contained within the JSON fields.
 `
-const DEFAULT_TIMEOUT_MS = 120_000
-
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
 /* -------------------------------------------------------------------------- */
@@ -56,10 +54,7 @@ const DEFAULT_TIMEOUT_MS = 120_000
  * @param {MeetingPrepInput} input
  * @param {MeetingPrepOptions} [options]
  */
-export async function runMeetingPrep(
-  input,
-  { timeoutMs = DEFAULT_TIMEOUT_MS } = {}
-) {
+export async function runMeetingPrep(input) {
   console.log(pc.cyan(`→ runMeetingPrep(${input.linkedinUrl})`))
 
   /* ------------------ launch Perplexity Ask MCP server ------------------- */
@@ -199,7 +194,7 @@ Remember to ONLY return a valid JSON object with the specified structure. No oth
     }
 
     /* Pretty-print before returning to caller */
-    return JSON.stringify(finalResponse, null, 2)
+    return finalResponse
   } finally {
     await client.close().catch(() => null)
   }
