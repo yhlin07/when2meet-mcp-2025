@@ -54,5 +54,38 @@ app.post("/api/report", async (req, res) => {
   }
 })
 
+app.get("/api/report/stream", async (req, res) => {
+  const abort = new AbortController()
+  req.on("close", () => abort.abort())
+
+  res.setHeader("Content-Type", "text/event-stream")
+  res.setHeader("Cache-Control", "no-cache")
+  res.setHeader("Connection", "keep-alive")
+  res.flushHeaders()
+
+  try {
+    const params = MeetingPrepSchema.parse(req.query)
+    const report = await runMeetingPrep(params, {
+      timeoutMs: 90_000,
+      signal: abort.signal,
+      onToken(text) {
+        res.write(`data: ${JSON.stringify({ text })}\n\n`)
+      },
+    })
+
+    if (!report) {
+      res.write(`event: error\ndata: ${JSON.stringify({ error: "Meeting-prep timed out" })}\n\n`)
+      return res.end()
+    }
+
+    res.write(`data: ${JSON.stringify({ done: true, report })}\n\n`)
+    res.end()
+  } catch (err) {
+    console.error("[/api/report/stream]", err)
+    res.write(`event: error\ndata: ${JSON.stringify({ error: err.message })}\n\n`)
+    res.end()
+  }
+})
+
 const PORT = Number.parseInt(process.env.PORT, 10) || 4000
 app.listen(PORT, () => console.log(`⚡️  Backend ready on :${PORT}`))
