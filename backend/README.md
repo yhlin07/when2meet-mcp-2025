@@ -53,3 +53,7 @@ On success the response looks like:
 ```
 
 If a timeout occurs or the input is invalid you will receive an error JSON with an appropriate HTTP status code.
+
+### `GET /api/report/stream`
+
+Streams the report using Server-Sent Events. Pass the same parameters as query string values. Each event contains JSON chunks `{ "text": "..." }` while generating and a final `{ "done": true, "report": { ... } }` object when complete.

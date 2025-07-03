@@ -12,12 +12,12 @@ function App() {
   const [websiteContent, setWebsiteContent] = useState("");
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(false);
+  const [streamText, setStreamText] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (loading) return;
 
-    // basic validation: ensure a URL was provided
     if (!linkedinUrl.trim()) {
       setError("Please enter a LinkedIn profile URL.");
       return;
@@ -26,29 +26,34 @@ function App() {
     setLoading(true);
     setError("");
     setReport(null);
+    setStreamText("");
 
-    try {
-      const resp = await fetch("http://localhost:4000/api/report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          linkedinUrl,
-          websiteContent
-        })
-      });
+    const qs = new URLSearchParams({
+      linkedinUrl,
+      websiteContent,
+    });
 
-      if (!resp.ok) {
-        const { error } = await resp.json();
-        throw new Error(error || "Request failed");
+    const es = new EventSource(
+      `http://localhost:4000/api/report/stream?${qs.toString()}`
+    );
+
+    es.onmessage = (evt) => {
+      const data = JSON.parse(evt.data);
+      if (data.text) {
+        setStreamText((t) => t + data.text);
       }
+      if (data.done) {
+        setReport(data.report);
+        setLoading(false);
+        es.close();
+      }
+    };
 
-      const data = await resp.json();
-      setReport(data);
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
+    es.onerror = () => {
+      setError("Stream error");
       setLoading(false);
-    }
+      es.close();
+    };
   };
 
   return (
@@ -82,6 +87,10 @@ function App() {
 
         {error && (
           <p style={{ marginTop: "1rem", color: "red" }}>{error}</p>
+        )}
+
+        {loading && streamText && (
+          <pre style={{ marginTop: "1rem" }}>{streamText}</pre>
         )}
 
         {report && (

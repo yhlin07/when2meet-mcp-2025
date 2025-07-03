@@ -54,8 +54,10 @@ All content should be contained within the JSON fields.
  * @param {MeetingPrepInput} input
  * @param {MeetingPrepOptions} [options]
  */
-export async function runMeetingPrep(input) {
+export async function runMeetingPrep(input, options = {}) {
   console.log(pc.cyan(`→ runMeetingPrep(${input.linkedinUrl})`))
+
+  const { onToken, timeoutMs, signal } = options
 
   /* ------------------ launch Perplexity Ask MCP server ------------------- */
   const transport = new StdioClientTransport({
@@ -109,6 +111,11 @@ export async function runMeetingPrep(input) {
   /* ---------------------------- Claude call ------------------------------ */
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const abort = new AbortController()
+  if (signal) {
+    if (signal.aborted) abort.abort()
+    else signal.addEventListener("abort", () => abort.abort())
+  }
+  const timer = timeoutMs ? setTimeout(() => abort.abort(), timeoutMs) : null
 
   try {
     /** @type import("@anthropic-ai/sdk").MessagesParam */
@@ -129,7 +136,7 @@ Remember to ONLY return a valid JSON object with the specified structure. No oth
 
     /* ─── Dialogue loop until dossier returned ─────────────────────────── */
     while (!finalResponse) {
-      const ai = await anthropic.messages.create(
+      const stream = anthropic.messages.stream(
         {
           model: CLAUDE_MODEL,
           system: SYSTEM_PROMPT,
@@ -139,6 +146,12 @@ Remember to ONLY return a valid JSON object with the specified structure. No oth
         },
         { signal: abort.signal }
       )
+
+      if (onToken) {
+        stream.on("text", (t) => onToken(t))
+      }
+
+      const ai = await stream.finalMessage()
 
       console.log(JSON.stringify(messages, null, 2))
 
@@ -196,6 +209,7 @@ Remember to ONLY return a valid JSON object with the specified structure. No oth
     /* Pretty-print before returning to caller */
     return finalResponse
   } finally {
+    if (timer) clearTimeout(timer)
     await client.close().catch(() => null)
   }
 }

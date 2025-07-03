@@ -19,6 +19,7 @@ This React application provides the user interface for the meeting‑prep tool. 
    The app will be available at [http://localhost:3000](http://localhost:3000).
 
 The frontend expects the backend to run on `http://localhost:4000`. If your backend is hosted elsewhere, update the API URL used in `src/App.tsx`.
+The app now uses Server-Sent Events to stream progress while the dossier is being generated.
 
 ## Scripts
 
