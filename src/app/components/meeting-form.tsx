@@ -4,17 +4,8 @@ import ReportView from '@/app/components/report-view'
 import { useReportGeneration } from '@/app/hooks/use-report-generation'
 
 export default function MeetingForm() {
-  const {
-    formData,
-    report,
-    loading,
-    streamText,
-    error,
-    partialOpener,
-    partialQuestions,
-    handleInputChange,
-    generateReport,
-  } = useReportGeneration()
+  const { formData, report, loading, loadingText, error, handleInputChange, generateReport } =
+    useReportGeneration()
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -28,16 +19,16 @@ export default function MeetingForm() {
             className="w-full p-4 text-lg bg-mint sketch-input font-heading placeholder:text-gray-500"
             type="text"
             name="linkedinUrl"
-            placeholder="LinkedIn URL"
+            placeholder="LinkedIn profile URL (we'll search public info)"
             value={formData.linkedinUrl}
             onChange={handleInputChange}
           />
           <textarea
             rows={4}
             className="w-full p-4 text-lg bg-mint sketch-input font-heading placeholder:text-gray-500 resize-y"
-            name="websiteContent"
-            placeholder="Extra website notes (optional)"
-            value={formData.websiteContent}
+            name="additionalNotes"
+            placeholder="Additional notes about the person/meeting (optional)"
+            value={formData.additionalNotes}
             onChange={handleInputChange}
           />
           <button
@@ -48,59 +39,16 @@ export default function MeetingForm() {
             {loading ? '✨ Generating…' : "🚀 Let's go!"}
           </button>
 
-          {error && (
-            <p className="mt-4 text-red-600 text-center font-heading">
-              {error}
-            </p>
-          )}
+          {error && <p className="mt-4 text-red-600 text-center font-heading">{error}</p>}
 
-          {streamText && (
-            <pre className="mt-4 font-heading text-sm bg-white sketch-card overflow-auto max-h-96">
-              {streamText}
-            </pre>
-          )}
-
-          {/* Partial Results - Show as they stream in */}
-          {(partialOpener || partialQuestions.length > 0) && (
-            <div className="mt-8 font-heading">
-              {partialOpener && (
-                <div className="mb-6">
-                  <h2 className="text-2xl font-heading mb-4 transform -rotate-1">
-                    🧊 Ice-breaker
-                  </h2>
-                  <p className="text-lg leading-relaxed bg-mint/50 sketch-card">
-                    {partialOpener}
-                  </p>
-                </div>
-              )}
-
-              {partialQuestions.length > 0 && (
-                <div>
-                  <h2 className="text-2xl font-heading mb-4 transform rotate-1">
-                    ❓ Questions
-                  </h2>
-                  <ul className="space-y-4">
-                    {partialQuestions.map((question, idx) => (
-                      <li
-                        key={idx}
-                        className="bg-sky/50 sketch-card animate-in slide-in-from-bottom duration-500"
-                      >
-                        <strong className="text-lg font-heading block mb-2">
-                          {question.q}
-                        </strong>
-                        <small className="text-gray-600">
-                          Why: {question.why}
-                        </small>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+          {loading && (
+            <div className="mt-8 text-center">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+              <p className="mt-4 text-lg font-heading">{loadingText}</p>
             </div>
           )}
 
-          {/* Final complete report (hidden when partial results are shown) */}
-          {report && !partialOpener && <ReportView report={report} />}
+          {report && <ReportView report={report} />}
         </div>
       </div>
     </div>

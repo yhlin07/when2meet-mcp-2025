@@ -10,24 +10,20 @@ export interface Report {
 
 export interface FormData {
   linkedinUrl: string
-  websiteContent: string
+  additionalNotes: string
 }
 
 export function useReportGeneration() {
   const [formData, setFormData] = useState<FormData>({
     linkedinUrl: '',
-    websiteContent: '',
+    additionalNotes: '',
   })
   const [report, setReport] = useState<Report | null>(null)
   const [loading, setLoading] = useState(false)
-  const [streamText, setStreamText] = useState('')
+  const [loadingText, setLoadingText] = useState('')
   const [error, setError] = useState('')
-  const [partialOpener, setPartialOpener] = useState<string>('')
-  const [partialQuestions, setPartialQuestions] = useState<Question[]>([])
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
@@ -45,9 +41,7 @@ export function useReportGeneration() {
     setLoading(true)
     setError('')
     setReport(null)
-    setStreamText('')
-    setPartialOpener('')
-    setPartialQuestions([])
+    setLoadingText('✨ Preparing your meeting dossier...')
 
     try {
       const response = await fetch('/api/report', {
@@ -57,7 +51,7 @@ export function useReportGeneration() {
         },
         body: JSON.stringify({
           linkedinUrl: formData.linkedinUrl,
-          websiteContent: formData.websiteContent,
+          additionalNotes: formData.additionalNotes,
         }),
       })
 
@@ -84,21 +78,12 @@ export function useReportGeneration() {
             try {
               const data = JSON.parse(line.slice(6))
               if (data.text) {
-                setStreamText((t) => t + data.text)
-              }
-              if (data.partial_opener) {
-                setPartialOpener(data.partial_opener)
-              }
-              if (data.partial_question) {
-                setPartialQuestions((prev) => {
-                  const newQuestions = [...prev]
-                  newQuestions[data.question_index] = data.partial_question
-                  return newQuestions
-                })
+                setLoadingText(data.text)
               }
               if (data.done) {
                 setReport(data.report)
                 setLoading(false)
+                setLoadingText('')
                 return
               }
             } catch (parseError) {
@@ -131,10 +116,8 @@ export function useReportGeneration() {
     formData,
     report,
     loading,
-    streamText,
+    loadingText,
     error,
-    partialOpener,
-    partialQuestions,
     handleInputChange,
     generateReport,
   }

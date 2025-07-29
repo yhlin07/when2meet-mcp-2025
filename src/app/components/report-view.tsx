@@ -14,9 +14,7 @@ export default function ReportView({ report }: ReportViewProps) {
       <ul className="space-y-4">
         {report.questions.map((q, idx) => (
           <li key={idx} className="bg-sky/50 sketch-card">
-            <strong className="text-lg font-heading block mb-2">
-              {q.q}
-            </strong>
+            <strong className="text-lg font-heading block mb-2">{q.q}</strong>
             <small className="text-gray-600">Why: {q.why}</small>
           </li>
         ))}

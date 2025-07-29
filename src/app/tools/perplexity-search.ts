@@ -1,4 +1,6 @@
 import { tool } from 'ai'
+import { perplexity } from '@ai-sdk/perplexity'
+import { generateText } from 'ai'
 import { z } from 'zod'
 
 export const perplexitySearchTool = tool({
@@ -13,50 +15,16 @@ export const perplexitySearchTool = tool({
     }
 
     try {
-      const response = await fetch(
-        'https://api.perplexity.ai/chat/completions',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'sonar',
-            messages: [
-              {
-                role: 'user',
-                content: query,
-              },
-            ],
-            stream: false,
-            temperature: 0.3,
-            max_tokens: 4000,
-          }),
-        }
-      )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error(`Perplexity API error response:`, errorText)
-        throw new Error(
-          `Perplexity API error: ${response.status} ${response.statusText} - ${errorText}`
-        )
-      }
-
-      const data = await response.json()
-
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        console.error(
-          'Invalid Perplexity response:',
-          JSON.stringify(data, null, 2)
-        )
-        throw new Error('Invalid response format from Perplexity API')
-      }
+      const { text, usage } = await generateText({
+        model: perplexity('sonar'),
+        prompt: query,
+        temperature: 0.3,
+        maxTokens: 4000,
+      })
 
       return {
-        content: data.choices[0].message.content,
-        usage: data.usage || null,
+        content: text,
+        usage: usage || null,
       }
     } catch (error) {
       console.error('[Perplexity Search Tool] Error:', error)

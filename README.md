@@ -1,4 +1,4 @@
-# Meeting Prep AI
+# Meeting Prep AI 🚀
 
 An intelligent meeting preparation tool that generates personalized dossiers by researching LinkedIn profiles and company information using AI-powered web search and analysis.
 
@@ -16,7 +16,7 @@ This Next.js application helps you prepare for meetings by:
 - **LinkedIn Profile Analysis**: Deep research into professional backgrounds, experience, and connections
 - **Company Research**: Current news, developments, and contextual information
 - **Personalized Ice-Breakers**: Two-sentence conversation starters tailored to the individual
-- **Strategic Questions**: Open-ended questions with rationale for meaningful engagement
+- **Strategic Questions**: Three open-ended questions with rationale for meaningful engagement
 - **Real-Time Streaming**: Live updates as the AI researches and generates insights
 - **Retro UI Design**: Clean, brutalist interface with playful styling
 
@@ -86,10 +86,10 @@ npm run dev
 
 - **Next.js 15**: React framework with App Router and Edge Runtime
 - **Vercel AI SDK**: Streaming text generation and tool orchestration
-- **OpenAI GPT-4o-mini**: AI orchestration and summary generation
-- **Perplexity API**: Web research and real-time information gathering
+- **OpenAI GPT-4.1**: AI orchestration and summary generation
+- **Perplexity Sonar**: Web research and real-time information gathering
 - **TypeScript**: Type-safe development
-- **Tailwind CSS**: Styling with custom brutalist design
+- **Tailwind CSS v4**: Styling with custom brutalist design
 - **Zod**: Runtime type validation and structured outputs
 
 ### System Design
@@ -97,12 +97,10 @@ npm run dev
 The application uses a tool-based orchestrator architecture:
 
 1. **Frontend Components** (`src/app/components/`):
-
    - `meeting-form.tsx`: Input form with real-time streaming display
    - `report-view.tsx`: Structured dossier presentation
 
 2. **API Layer** (`src/app/api/report/route.ts`):
-
    - Edge runtime endpoint with 300-second timeout
    - Server-Sent Events (SSE) streaming with keep-alive heartbeats
    - Input validation using Zod schemas
@@ -128,6 +126,8 @@ The application uses a tool-based orchestrator architecture:
 - **Build for production**: `npm run build`
 - **Start production server**: `npm start`
 - **Lint code**: `npm run lint`
+- **Format code**: `npm run format`
+- **Check formatting**: `npm run format:check`
 
 ### Code Style
 

@@ -21,8 +21,7 @@ const gloriaHallelujah = Gloria_Hallelujah({
 
 export const metadata: Metadata = {
   title: 'Meeting Prep Tool',
-  description:
-    'Generate concise dossiers for any LinkedIn contact using AI and web research',
+  description: 'Generate concise dossiers for any LinkedIn contact using AI and web research',
 }
 
 export default function RootLayout({
@@ -32,7 +31,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${poppins.variable} ${gloriaHallelujah.variable} antialiased`}>
+      <body
+        className={`${inter.variable} ${poppins.variable} ${gloriaHallelujah.variable} antialiased`}
+      >
         {children}
       </body>
     </html>
