@@ -4,6 +4,7 @@ import { streamText } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { perplexitySearchTool } from '@/app/tools/perplexity-search'
 import { openaiSummaryTool } from '@/app/tools/openai-summary'
+import { meetingContextAnalyzerTool } from '@/app/tools/meeting-context-analyzer'
 
 export const runtime = 'edge'
 export const maxDuration = 300
@@ -14,14 +15,21 @@ const MeetingPrepSchema = z.object({
 })
 
 const SYSTEM_PROMPT = `
-You are an AI orchestrator that prepares meeting dossiers by coordinating research and summary generation.
+You are an expert meeting preparation assistant that creates highly personalized, context-aware dossiers by orchestrating research and summary generation.
 
 Your workflow:
-1. Use the perplexity_search tool to research the LinkedIn profile and person's background
-2. Use the openai_summary tool to generate a structured meeting dossier from the research
+1. Use the meeting_context_analyzer tool to understand the meeting type, goals, and appropriate tone
+2. Use the perplexity_search tool to research the LinkedIn profile, incorporating insights from the context analysis
+3. Use the openai_summary tool to generate a structured dossier that aligns with the analyzed context
 
-Always use both tools in sequence - first research, then summarize into the final dossier format.
-Be thorough in your research but efficient in your orchestration.
+Key principles:
+- Let the context analysis guide your entire approach
+- Focus your research based on the identified meeting goals and focus areas
+- Adapt the dossier's tone to match the formality level identified
+- When LinkedIn information is limited: Research their company, industry trends, and find alternative angles
+- Ensure all outputs align with the meeting's purpose and context
+
+Remember: The context analysis is your north star - use it to create truly personalized, relevant dossiers.
 `
 
 const openai = createOpenAI({
@@ -46,17 +54,27 @@ async function handleMeetingPrep(params: { linkedinUrl: string; additionalNotes:
   const userPrompt = `Please prepare a meeting dossier for this person:
 
 LinkedIn Profile: ${params.linkedinUrl}
-${
-  params.additionalNotes
-    ? `Additional Notes: ${params.additionalNotes}`
-    : 'No additional notes provided.'
-}
+Meeting Notes: ${params.additionalNotes || 'No specific notes provided'}
 
-Please use your tools to:
-1. Research their LinkedIn profile, recent activities, company information, and industry context
-2. Generate a structured meeting dossier with personalized conversation starters
+Follow this workflow:
 
-Make sure to research thoroughly before generating the final dossier.`
+1. Context Analysis (using meeting_context_analyzer):
+   - Analyze the meeting notes to understand the type, formality, goals, and focus areas
+   - This analysis will guide your entire approach
+
+2. Research Phase (using perplexity_search):
+   - Research the LinkedIn profile and related information
+   - Focus your research based on the context analysis results
+   - Pay special attention to the identified focus areas and meeting goals
+   - If profile info is limited, research their company and industry
+
+3. Dossier Generation (using openai_summary):
+   - Create a dossier that matches the analyzed context
+   - Ensure the tone matches the formality level identified
+   - Focus questions on the primary goals from the context analysis
+   - Make everything feel natural and specific to this meeting
+
+IMPORTANT: You must use all three tools in sequence. The context analysis is crucial for creating a truly personalized dossier.`
 
   try {
     const result = await streamText({
@@ -69,11 +87,12 @@ Make sure to research thoroughly before generating the final dossier.`
         },
       ],
       tools: {
+        meeting_context_analyzer: meetingContextAnalyzerTool,
         perplexity_search: perplexitySearchTool,
         openai_summary: openaiSummaryTool,
       },
       maxSteps: 10,
-      temperature: 0.3,
+      temperature: 0.4,
     })
 
     const encoder = new TextEncoder()
@@ -94,10 +113,12 @@ Make sure to research thoroughly before generating the final dossier.`
           for await (const delta of result.fullStream) {
             if (delta.type === 'tool-call') {
               let progressMessage = ''
-              if (delta.toolName === 'perplexity_search') {
-                progressMessage = '🔍 Researching LinkedIn profile and background...'
+              if (delta.toolName === 'meeting_context_analyzer') {
+                progressMessage = '🧠 Analyzing meeting context and goals...'
+              } else if (delta.toolName === 'perplexity_search') {
+                progressMessage = '🕵️ Investigating LinkedIn profile and background...'
               } else if (delta.toolName === 'openai_summary') {
-                progressMessage = '✨ Generating personalized meeting dossier...'
+                progressMessage = '📝 Crafting your personalized dossier...'
               }
               if (progressMessage) {
                 controller.enqueue(
@@ -105,8 +126,13 @@ Make sure to research thoroughly before generating the final dossier.`
                 )
               }
             } else if (delta.type === 'tool-result') {
-              if (delta.toolName === 'perplexity_search') {
-                const completionMessage = '✅ Research complete! Analyzing findings...'
+              if (delta.toolName === 'meeting_context_analyzer') {
+                const completionMessage = '💡 Context mapped! Starting research...'
+                controller.enqueue(
+                  encoder.encode(`data: ${JSON.stringify({ text: completionMessage })}\n\n`)
+                )
+              } else if (delta.toolName === 'perplexity_search') {
+                const completionMessage = '📊 Intel gathered! Analyzing findings...'
                 controller.enqueue(
                   encoder.encode(`data: ${JSON.stringify({ text: completionMessage })}\n\n`)
                 )
@@ -117,7 +143,7 @@ Make sure to research thoroughly before generating the final dossier.`
                     ...delta.result,
                   }
                 }
-                const completionMessage = '🎉 Meeting dossier ready!'
+                const completionMessage = '🎯 Dossier delivered!'
                 controller.enqueue(
                   encoder.encode(`data: ${JSON.stringify({ text: completionMessage })}\n\n`)
                 )

@@ -41,7 +41,7 @@ export function useReportGeneration() {
     setLoading(true)
     setError('')
     setReport(null)
-    setLoadingText('✨ Preparing your meeting dossier...')
+    setLoadingText('⚡ Preparing your meeting dossier...')
 
     try {
       const response = await fetch('/api/report', {

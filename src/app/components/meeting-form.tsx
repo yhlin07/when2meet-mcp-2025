@@ -64,14 +64,28 @@ export default function MeetingForm() {
             disabled={loading}
             onClick={generateReport}
           >
-            {loading ? '✨ Generating…' : "🚀 Let's go!"}
+            {loading ? '⚡ Working on it...' : '🎯 Prep my meeting'}
           </button>
 
           {error && <p className="mt-4 text-red-600 text-center font-heading">{error}</p>}
 
           {loading && (
             <div className="mt-8 text-center">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+              <div className="emoji-spinner">
+                {loadingText.includes('🧠')
+                  ? '🧠'
+                  : loadingText.includes('🕵️')
+                    ? '🕵️'
+                    : loadingText.includes('📝')
+                      ? '📝'
+                      : loadingText.includes('💡')
+                        ? '💡'
+                        : loadingText.includes('📊')
+                          ? '📊'
+                          : loadingText.includes('🎯')
+                            ? '🎯'
+                            : '⚡'}
+              </div>
               <p className="mt-4 text-lg font-heading">{loadingText}</p>
             </div>
           )}

@@ -93,3 +93,17 @@ body {
     transform: translateY(-2px) rotate(-0.3deg);
   }
 }
+
+@keyframes emoji-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.emoji-spinner {
+  @apply inline-block text-4xl;
+  animation: emoji-spin 1s linear infinite;
+}
