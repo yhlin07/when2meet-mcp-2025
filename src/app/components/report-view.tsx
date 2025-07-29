@@ -1,12 +1,13 @@
+import { forwardRef } from 'react'
 import { Report } from '@/app/hooks/use-report-generation'
 
 interface ReportViewProps {
   report: Report
 }
 
-export default function ReportView({ report }: ReportViewProps) {
+const ReportView = forwardRef<HTMLDivElement, ReportViewProps>(({ report }, ref) => {
   return (
-    <div className="mt-8 font-heading">
+    <div ref={ref} className="mt-8 font-heading">
       <h2 className="text-2xl font-heading mb-4 transform -rotate-1">🧊 Ice-breaker</h2>
       <p className="mb-6 text-lg leading-relaxed bg-mint/50 sketch-card">{report.opener}</p>
 
@@ -21,4 +22,8 @@ export default function ReportView({ report }: ReportViewProps) {
       </ul>
     </div>
   )
-}
+})
+
+ReportView.displayName = 'ReportView'
+
+export default ReportView

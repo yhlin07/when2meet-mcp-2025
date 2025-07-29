@@ -1,11 +1,39 @@
 'use client'
 
+import { useRef, useEffect } from 'react'
 import ReportView from '@/app/components/report-view'
 import { useReportGeneration } from '@/app/hooks/use-report-generation'
 
 export default function MeetingForm() {
   const { formData, report, loading, loadingText, error, handleInputChange, generateReport } =
     useReportGeneration()
+  const reportRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (report && reportRef.current) {
+      // Small delay to ensure DOM is fully updated
+      setTimeout(() => {
+        if (reportRef.current) {
+          const rect = reportRef.current.getBoundingClientRect()
+          const viewportHeight = window.innerHeight
+
+          // If report is taller than viewport, scroll to the bottom
+          // Otherwise, scroll the report into view at the top
+          if (rect.height > viewportHeight) {
+            window.scrollTo({
+              top: document.documentElement.scrollHeight,
+              behavior: 'smooth',
+            })
+          } else {
+            reportRef.current.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
+            })
+          }
+        }
+      }, 100)
+    }
+  }, [report])
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -48,7 +76,7 @@ export default function MeetingForm() {
             </div>
           )}
 
-          {report && <ReportView report={report} />}
+          {report && <ReportView ref={reportRef} report={report} />}
         </div>
       </div>
     </div>
