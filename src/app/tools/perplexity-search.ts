@@ -14,10 +14,29 @@ export const perplexitySearchTool = tool({
       throw new Error('PERPLEXITY_API_KEY environment variable is not set')
     }
 
+    const enhancedQuery = `${query}
+
+Please provide comprehensive information including:
+- Professional background and current role details
+- Recent career updates or achievements
+- Company information and recent company news
+- Notable projects, publications, or speaking engagements
+- Educational background and certifications
+- Any shared connections, interests, or experiences that could serve as conversation starters
+- Industry context and trends relevant to their role
+
+If the LinkedIn profile has limited information, please:
+- Research their current company and team
+- Look for alternative sources (company website, news articles, etc.)
+- Provide industry-specific context that could be relevant
+- Find interesting facts about their company or field
+
+Focus on recent and relevant information that would be useful for a professional meeting.`
+
     try {
       const { text, usage } = await generateText({
         model: perplexity('sonar'),
-        prompt: query,
+        prompt: enhancedQuery,
         temperature: 0.3,
         maxTokens: 4000,
       })
