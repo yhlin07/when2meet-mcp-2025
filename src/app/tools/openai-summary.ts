@@ -135,7 +135,7 @@ export const openaiSummaryTool = tool({
     linkedinUrl: z.string().describe('The LinkedIn URL being researched'),
     additionalNotes: z.string().optional().describe('Additional notes about the person/meeting'),
   }),
-  execute: async ({ researchData, linkedinUrl, additionalNotes }, _options) => {
+  execute: async ({ researchData, linkedinUrl, additionalNotes }) => {
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('OPENAI_API_KEY environment variable is not set')
     }

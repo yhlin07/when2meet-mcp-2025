@@ -9,7 +9,7 @@ export const perplexitySearchTool = tool({
   inputSchema: z.object({
     query: z.string().describe('The search query to research'),
   }),
-  execute: async ({ query }, _options) => {
+  execute: async ({ query }) => {
     if (!process.env.PERPLEXITY_API_KEY) {
       throw new Error('PERPLEXITY_API_KEY environment variable is not set')
     }

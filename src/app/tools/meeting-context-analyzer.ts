@@ -31,7 +31,7 @@ export const meetingContextAnalyzerTool = tool({
     linkedinUrl: z.string().describe('The LinkedIn URL of the person'),
     additionalNotes: z.string().describe('Notes about the meeting or person'),
   }),
-  execute: async ({ linkedinUrl, additionalNotes }, _options) => {
+  execute: async ({ linkedinUrl, additionalNotes }) => {
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('OPENAI_API_KEY environment variable is not set')
     }
