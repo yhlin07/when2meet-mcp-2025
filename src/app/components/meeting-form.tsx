@@ -71,22 +71,7 @@ export default function MeetingForm() {
 
           {loading && (
             <div className="mt-8 text-center">
-              <div className="emoji-spinner">
-                {loadingText.includes('🧠')
-                  ? '🧠'
-                  : loadingText.includes('🕵️')
-                    ? '🕵️'
-                    : loadingText.includes('📝')
-                      ? '📝'
-                      : loadingText.includes('💡')
-                        ? '💡'
-                        : loadingText.includes('📊')
-                          ? '📊'
-                          : loadingText.includes('🎯')
-                            ? '🎯'
-                            : '⚡'}
-              </div>
-              <p className="mt-4 text-lg font-heading">{loadingText}</p>
+              <p className="text-lg font-heading">{loadingText}</p>
             </div>
           )}
 
