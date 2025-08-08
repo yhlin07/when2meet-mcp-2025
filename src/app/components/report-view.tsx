@@ -1,5 +1,7 @@
+'use client'
 import { forwardRef } from 'react'
 import { Report } from '@/app/hooks/use-report-generation'
+import Visualizations from '@/app/components/visualizations'
 
 interface ReportViewProps {
   report: Report
@@ -8,6 +10,10 @@ interface ReportViewProps {
 const ReportView = forwardRef<HTMLDivElement, ReportViewProps>(({ report }, ref) => {
   return (
     <div ref={ref} className="mt-8 font-heading">
+      {report.visualizations && report.visualizations.length > 0 && (
+        <Visualizations items={report.visualizations} />
+      )}
+
       <h2 className="text-2xl font-heading mb-4 transform -rotate-1">💬 Conversation starter</h2>
       <p className="mb-6 text-lg leading-relaxed bg-mint/50 sketch-card">{report.opener}</p>
 

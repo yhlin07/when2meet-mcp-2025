@@ -3,9 +3,49 @@
 import { useState } from 'react'
 
 export type Question = { q: string; why: string }
+export type TimelineItem = {
+  title: string
+  company?: string
+  period: string
+  start?: string
+  end?: string | null
+  notes?: string
+}
+
+export type FocusItem = { label: string; weight: number }
+
+export type FlowStep = {
+  step: string
+  intent: string
+  suggestedQuestions?: string[]
+}
+
+export interface Analytics {
+  careerTimeline?: TimelineItem[]
+  focusBreakdown?: FocusItem[]
+  meetingFlow?: FlowStep[]
+}
+
+export type VisualizationType = 'bar' | 'pie' | 'line' | 'sankey' | 'timeline'
+
+export type SeriesDatum = { label: string; value: number }
+export type SankeyData = {
+  nodes: { name: string }[]
+  links: { source: number; target: number; value: number }[]
+}
+
+export type Visualization = {
+  type: VisualizationType
+  title: string
+  description?: string
+  data: SeriesDatum[] | SankeyData | TimelineItem[]
+}
+
 export interface Report {
   opener: string
   questions: Question[]
+  analytics?: Analytics
+  visualizations?: Visualization[]
 }
 
 export interface FormData {
