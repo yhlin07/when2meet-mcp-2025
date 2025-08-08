@@ -44,7 +44,7 @@ const VisualizationSchema = z.object({
     ),
 })
 
-const DossierSchema = z.object({
+export const DossierSchema = z.object({
   opener: z
     .string()
     .describe(
@@ -126,14 +126,16 @@ const DossierSchema = z.object({
     ),
 })
 
+export type Dossier = z.infer<typeof DossierSchema>
+
 export const openaiSummaryTool = tool({
   description: 'Generate a structured meeting dossier from research data using OpenAI',
-  parameters: z.object({
+  inputSchema: z.object({
     researchData: z.string().describe('Raw research data about the person and their background'),
     linkedinUrl: z.string().describe('The LinkedIn URL being researched'),
     additionalNotes: z.string().optional().describe('Additional notes about the person/meeting'),
   }),
-  execute: async ({ researchData, linkedinUrl, additionalNotes }) => {
+  execute: async ({ researchData, linkedinUrl, additionalNotes }, _options) => {
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('OPENAI_API_KEY environment variable is not set')
     }
@@ -201,7 +203,7 @@ Remember: The goal is to facilitate a genuine connection, not conduct an intervi
           additionalNotes?.toLowerCase().includes('chat')
             ? 0.8
             : 0.7,
-        maxTokens: 1500,
+        maxOutputTokens: 1500,
       })
 
       return object

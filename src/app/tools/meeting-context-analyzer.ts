@@ -27,11 +27,11 @@ const MeetingContextSchema = z.object({
 
 export const meetingContextAnalyzerTool = tool({
   description: 'Analyze meeting notes to understand context, type, and goals',
-  parameters: z.object({
+  inputSchema: z.object({
     linkedinUrl: z.string().describe('The LinkedIn URL of the person'),
     additionalNotes: z.string().describe('Notes about the meeting or person'),
   }),
-  execute: async ({ linkedinUrl, additionalNotes }) => {
+  execute: async ({ linkedinUrl, additionalNotes }, _options) => {
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('OPENAI_API_KEY environment variable is not set')
     }
@@ -58,7 +58,7 @@ If the notes are vague or minimal, make reasonable inferences based on common pr
           'You are an expert at understanding professional meeting contexts and providing nuanced analysis of interpersonal dynamics. You excel at reading between the lines and understanding both explicit and implicit meeting goals.',
         prompt,
         temperature: 0.3,
-        maxTokens: 500,
+        maxOutputTokens: 500,
       })
 
       return object

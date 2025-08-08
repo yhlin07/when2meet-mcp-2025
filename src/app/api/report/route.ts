@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { streamText } from 'ai'
+import { streamText, stepCountIs } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { perplexitySearchTool } from '@/app/tools/perplexity-search'
-import { openaiSummaryTool } from '@/app/tools/openai-summary'
+import { openaiSummaryTool, type Dossier } from '@/app/tools/openai-summary'
 import { meetingContextAnalyzerTool } from '@/app/tools/meeting-context-analyzer'
 
 export const runtime = 'edge'
@@ -91,7 +91,8 @@ IMPORTANT: You must use all three tools in sequence. The context analysis is cru
         perplexity_search: perplexitySearchTool,
         openai_summary: openaiSummaryTool,
       },
-      maxSteps: 10,
+      // Limit the number of tool-execution LLM steps to avoid loops
+      stopWhen: stepCountIs(10),
       temperature: 0.4,
     })
 
@@ -99,11 +100,7 @@ IMPORTANT: You must use all three tools in sequence. The context analysis is cru
     const stream = new ReadableStream({
       async start(controller) {
         let keepAliveInterval: NodeJS.Timeout | null = null
-        let finalDossier: {
-          status: string
-          opener: string
-          questions: Array<{ q: string; why: string }>
-        } | null = null
+        let finalDossier: (Dossier & { status: string }) | null = null
 
         try {
           keepAliveInterval = setInterval(() => {
@@ -137,10 +134,10 @@ IMPORTANT: You must use all three tools in sequence. The context analysis is cru
                   encoder.encode(`data: ${JSON.stringify({ text: completionMessage })}\n\n`)
                 )
               } else if (delta.toolName === 'openai_summary') {
-                if (delta.result) {
+                if (delta.output) {
                   finalDossier = {
                     status: 'complete',
-                    ...delta.result,
+                    ...(delta.output as Dossier),
                   }
                 }
                 const completionMessage = '🎯 Dossier delivered!'

@@ -6,10 +6,10 @@ import { z } from 'zod'
 export const perplexitySearchTool = tool({
   description:
     'Search the web using Perplexity AI to research LinkedIn profiles and company information',
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe('The search query to research'),
   }),
-  execute: async ({ query }) => {
+  execute: async ({ query }, _options) => {
     if (!process.env.PERPLEXITY_API_KEY) {
       throw new Error('PERPLEXITY_API_KEY environment variable is not set')
     }
@@ -38,7 +38,7 @@ Focus on recent and relevant information that would be useful for a professional
         model: perplexity('sonar'),
         prompt: enhancedQuery,
         temperature: 0.3,
-        maxTokens: 4000,
+        maxOutputTokens: 4000,
       })
 
       return {
